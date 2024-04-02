@@ -3,6 +3,7 @@
 import asyncio
 import sys
 import re
+import os
 from bleak import BleakScanner, BleakClient
 
 __PWR_SERVICE = "00001523-1212-efde-1523-785feabcd124"
@@ -88,6 +89,33 @@ async def turn_off_mac(mac):
             print("   LightHouse has been put in STANDBY.")
     except Exception as e:
         print(f">> ERROR: {e}")
+
+async def create_shortcuts(lh_macs):
+    import winshell
+    from win32com.client import Dispatch
+
+    desktop = winshell.desktop()
+    
+    for state in ["ON", "OFF"]:
+        shortcut_name = f"LHv2-{state}.lnk"
+        path = os.path.join(desktop, shortcut_name)
+        shell = Dispatch("WScript.Shell")
+        shortcut = shell.CreateShortcut(path)
+        
+        if ".py" in sys.argv[0]:
+            target_path = sys.executable
+            arguments = f'"{sys.argv[0]}" {state.lower()} ' + " ".join(lh_macs)
+        else:
+            target_path = '"' + sys.argv[0] + '"'
+            arguments = f"{state.lower()} " + " ".join(lh_macs)
+        
+        shortcut.TargetPath = target_path
+        shortcut.Arguments = arguments
+        shortcut.WorkingDirectory = os.path.dirname(os.path.abspath(sys.argv[0]))
+        shortcut.IconLocation = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), f"lhv2_{state.lower()}.ico")
+        shortcut.Save()
+        
+        print(f"   * OK: {shortcut_name} was created successfully.")
 
 async def main():
     global lh_macs
