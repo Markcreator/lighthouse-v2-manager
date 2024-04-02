@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import asyncio
 import sys
 import re
@@ -91,31 +89,34 @@ async def turn_off_mac(mac):
         print(f">> ERROR: {e}")
 
 async def create_shortcuts(lh_macs):
-    import winshell
-    from win32com.client import Dispatch
+    if sys.platform == "win32":
+        import winshell
+        from win32com.client import Dispatch
 
-    desktop = winshell.desktop()
-    
-    for state in ["ON", "OFF"]:
-        shortcut_name = f"LHv2-{state}.lnk"
-        path = os.path.join(desktop, shortcut_name)
-        shell = Dispatch("WScript.Shell")
-        shortcut = shell.CreateShortcut(path)
-        
-        if ".py" in sys.argv[0]:
-            target_path = sys.executable
-            arguments = f'"{sys.argv[0]}" {state.lower()} ' + " ".join(lh_macs)
-        else:
-            target_path = '"' + sys.argv[0] + '"'
-            arguments = f"{state.lower()} " + " ".join(lh_macs)
-        
-        shortcut.TargetPath = target_path
-        shortcut.Arguments = arguments
-        shortcut.WorkingDirectory = os.path.dirname(os.path.abspath(sys.argv[0]))
-        shortcut.IconLocation = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), f"lhv2_{state.lower()}.ico")
-        shortcut.Save()
-        
-        print(f"   * OK: {shortcut_name} was created successfully.")
+        desktop = winshell.desktop()
+
+        for state in ["ON", "OFF"]:
+            shortcut_name = f"LHv2-{state}.lnk"
+            path = os.path.join(desktop, shortcut_name)
+            shell = Dispatch("WScript.Shell")
+            shortcut = shell.CreateShortcut(path)
+
+            if ".py" in sys.argv[0]:
+                target_path = sys.executable
+                arguments = f'"{sys.argv[0]}" {state.lower()} ' + " ".join(lh_macs)
+            else:
+                target_path = '"' + sys.argv[0] + '"'
+                arguments = f"{state.lower()} " + " ".join(lh_macs)
+
+            shortcut.TargetPath = target_path
+            shortcut.Arguments = arguments
+            shortcut.WorkingDirectory = os.path.dirname(os.path.abspath(sys.argv[0]))
+            shortcut.IconLocation = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), f"lhv2_{state.lower()}.ico")
+            shortcut.Save()
+
+            print(f"   * OK: {shortcut_name} was created successfully.")
+    else:
+        print(">> WARNING: Creating desktop shortcuts is not supported on this platform.")
 
 async def main():
     global lh_macs
