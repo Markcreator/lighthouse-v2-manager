@@ -66,7 +66,7 @@ async def process_macs(command, lh_macs):
             tasks.append(toggle_mac(mac))
         elif command.upper() == "ON":
             tasks.append(turn_on_mac(mac))
-        else:
+        elif command.upper() == "OFF":
             tasks.append(turn_off_mac(mac))
     await asyncio.gather(*tasks)
 
@@ -118,10 +118,31 @@ async def create_shortcuts(lh_macs):
     else:
         print(">> WARNING: Creating desktop shortcuts is not supported on this platform.")
 
+def print_usage():
+    print("Usage:")
+    print("    python lighthouse_manager.py [command] [options]")
+    print("")
+    print("Commands:")
+    print("    discover                Discover LightHouse V2 devices")
+    print("    on                      Turn on LightHouse V2 device(s)")
+    print("    off                     Turn off LightHouse V2 device(s)")
+    print("    toggle                  Toggle power state of LightHouse V2 device(s)")
+    print("")
+    print("Options:")
+    print("    --create-shortcuts, -cs Create desktop shortcuts for discovered devices (Windows only)")
+    print("")
+    print("Examples:")
+    print("    python lighthouse_manager.py discover")
+    print("    python lighthouse_manager.py on 12:34:56:78:9A:BC")
+    print("    python lighthouse_manager.py toggle 12:34:56:78:9A:BC 98:76:54:32:10:FE")
+    print("    python lighthouse_manager.py discover --create-shortcuts")
+    print("")
+
 async def main():
     global lh_macs
     if len(sys.argv) < 2 or sys.argv[1] not in ["on", "off", "discover", "toggle"]:
-        print(" Invalid or no command given. Usage...")
+        print(" Invalid or no command given.")
+        print_usage()
         sys.exit()
 
     command = sys.argv[1]
@@ -141,7 +162,7 @@ async def main():
 
     elif command in ["on", "off", "toggle"]:
         lh_macs.extend(sys.argv[2:])
-        invalid_macs = [mac for mac in lh_macs if not re.match("[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}", mac)]
+        invalid_macs = [mac for mac in lh_macs if not re.match(r"([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})|([0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12})", mac)]
         if invalid_macs:
             print("   * Invalid MAC address format: ", ", ".join(invalid_macs))
             lh_macs = [mac for mac in lh_macs if mac not in invalid_macs]
